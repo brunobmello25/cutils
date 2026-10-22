@@ -1,0 +1,5 @@
+# This repo is C, but clangd cannot infer a language for .h files without a
+# compile_commands.json, so it falls back to C++ and flags every implicit
+# void* -> T* conversion in arr_push as an error.
+CompileFlags:
+  Add: [-xc]
