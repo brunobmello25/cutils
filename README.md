@@ -6,7 +6,9 @@ use it in your project as a C library (stb style).
 
 ## Using a header
 
-As a library, define the implementation macro in exactly one translation unit (probably your main.c):
+As a library, define the implementation macro in exactly one translation unit (probably your main.c).
+
+Example with tasker:
 
 ```c
 #define TASKER_IMPL
