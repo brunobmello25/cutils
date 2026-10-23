@@ -117,6 +117,7 @@ typedef struct {
 	char *chars;
 	size_t len;
 	size_t capacity;
+	bool is_static;
 } String;
 String string_from_cstr(Arena *arena, char *cstr);
 ///--------------------------END STR--------------------------------------------
@@ -134,6 +135,11 @@ String string_from_cstr(Arena *arena, char *cstr) {
 	result.chars = push_array(arena, char, result.capacity);
 	memcpy(result.chars, cstr, result.len);
 	return result;
+}
+String String_from_lit(char *lit) {
+	size_t len = strlen(lit);
+	return (String){
+		.chars = lit, .len = len, .capacity = len, .is_static = true};
 }
 
 static void fail(const char *msg) {
@@ -179,13 +185,16 @@ char **get_all_files(char *dirname, char **files) {
 void run(char *dirname) {
 	char **all_files = get_all_files(dirname, NULL);
 
-	Arena *file_arena = arena_alloc(MB(1));
+	Arena *line_arena = arena_alloc(MB(1));
 	for (size_t i = 0; i < arr_len(all_files); i++) {
 		char *filepath = all_files[i];
 
 		FILE *fp = fopen(filepath, "r");
 		char linebuf[4096];
 		while (fgets(linebuf, 4096, fp) != NULL) {
+			String line = string_from_cstr(line_arena, linebuf);
+
+			arena_clear(line_arena);
 		}
 	}
 }
