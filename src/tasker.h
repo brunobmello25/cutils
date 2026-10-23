@@ -35,6 +35,7 @@ exit 0
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifndef TASKER_H
 #define TASKER_H
@@ -79,6 +80,18 @@ static void fail(const char *msg) {
 	exit(1);
 }
 
+static char *path_join(const char *left, const char *right) {
+	size_t llen = strlen(left);
+	size_t rlen = strlen(right);
+
+	char *joined = malloc(llen + 1 + rlen + 1);
+	memcpy(joined, left, llen);
+	joined[llen] = '/';
+	memcpy(joined + llen + 1, right, rlen);
+	joined[llen + rlen + 1] = '\0';
+	return joined;
+}
+
 // TODO(next): get the fullpath of the files instead of just the name, so that
 // we can iterate on them individually
 char **get_all_files(char *dirname, char **files) {
@@ -121,6 +134,8 @@ int main(int argc, char **argv) {
 		printf("  ./tasker.h path/to/project/root\n");
 		return 1;
 	}
+
+	(void)path_join;
 
 	run(argv[1]);
 }
