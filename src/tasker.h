@@ -75,6 +75,7 @@ void run(char *root);
 
 // ---------- IMPLEMENTATION ----------
 
+#ifdef TASKER_IMPL
 static void fail(const char *msg) {
 	fprintf(stderr, "%s", msg);
 	exit(1);
@@ -115,7 +116,6 @@ char **get_all_files(char *dirname, char **files) {
 	return files;
 }
 
-#ifdef TASKER_IMPL
 void run(char *dirname) {
 	printf("received directory %s\n", dirname);
 	char **all_files = get_all_files(dirname, NULL);
