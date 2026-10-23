@@ -68,7 +68,8 @@ typedef struct {
 		arr[header->count++] = value;                                          \
 	} while (0);
 
-#define arr_len(arr) ((((DA_HEADER *)(arr)) - 1)->count)
+#define arr_len(arr)                                                           \
+	(((arr) != NULL) ? ((((DA_HEADER *)(arr)) - 1)->count) : (0))
 
 char **get_all_files(char *dirname, char **files);
 void run(char *root);
