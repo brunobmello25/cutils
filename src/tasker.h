@@ -32,6 +32,7 @@ exit 0
 
 #include <assert.h>
 #include <dirent.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,12 +43,12 @@ exit 0
 
 #endif
 
+///--------------------------BEGIN ARRAY----------------------------------------
 typedef struct {
 	size_t count;
 	size_t capacity;
 } DA_HEADER;
 #define DA_INITIAL_CAPACITY 256
-
 #define arr_push(arr, value)                                                   \
 	do {                                                                       \
 		if (arr == NULL) {                                                     \
@@ -67,9 +68,58 @@ typedef struct {
 		arr = (void *)(header + 1);                                            \
 		arr[header->count++] = value;                                          \
 	} while (0);
-
 #define arr_len(arr)                                                           \
 	(((arr) != NULL) ? ((((DA_HEADER *)(arr)) - 1)->count) : (0))
+///--------------------------END ARRAY------------------------------------------
+
+///--------------------------BEGIN ARENA----------------------------------------
+#define KB(x) (((size_t)x) * (size_t)1024)
+#define MB(x) (KB(x) * ((size_t)x))
+typedef struct {
+	void *memory;
+	size_t offset;
+	size_t capacity;
+} Arena;
+Arena *arena_alloc(size_t capacity) {
+	void *backing_memory = malloc(capacity + sizeof(Arena));
+	Arena *arena = backing_memory;
+	arena->memory = (void *)((Arena *)backing_memory + 1);
+	arena->capacity = capacity;
+	arena->offset = 0;
+	return arena;
+}
+void *arena_push(Arena *arena, size_t bytes) {
+	if (arena->offset + bytes >= arena->capacity) {
+		size_t new_capacity = arena->capacity * 1.5;
+
+		void *start = ((Arena *)arena->memory) - 1;
+
+		start = realloc(start, new_capacity);
+		arena->capacity = new_capacity;
+		arena->memory = (void *)(((Arena *)start) + 1);
+	}
+
+	void *ptr = arena->memory + arena->offset;
+	arena->offset += bytes;
+	return ptr;
+}
+void arena_clear(Arena *arena) { arena->offset = 0; }
+void arena_free(Arena *arena) {
+	void *header = ((Arena *)arena->memory) - 1;
+	free(header);
+}
+#define push_struct(a, T) (T *)arena_push(a, sizeof(T))
+#define push_array(a, T, c) (T *)arena_push(a, sizeof(T) * c)
+///--------------------------END ARENA------------------------------------------
+
+///--------------------------BEGIN STR------------------------------------------
+typedef struct {
+	char *chars;
+	size_t len;
+	size_t capacity;
+} String;
+String string_from_cstr(Arena *arena, char *cstr);
+///--------------------------END STR--------------------------------------------
 
 char **get_all_files(char *dirname, char **files);
 void run(char *root);
@@ -77,6 +127,15 @@ void run(char *root);
 // ---------- IMPLEMENTATION ----------
 
 #ifdef TASKER_IMPL
+String string_from_cstr(Arena *arena, char *cstr) {
+	String result = {0};
+	result.len = strlen(cstr);
+	result.capacity = result.len * 2;
+	result.chars = push_array(arena, char, result.capacity);
+	memcpy(result.chars, cstr, result.len);
+	return result;
+}
+
 static void fail(const char *msg) {
 	fprintf(stderr, "%s", msg);
 	exit(1);
@@ -118,11 +177,16 @@ char **get_all_files(char *dirname, char **files) {
 }
 
 void run(char *dirname) {
-	printf("received directory %s\n", dirname);
 	char **all_files = get_all_files(dirname, NULL);
-	printf("Files:\n");
+
+	Arena *file_arena = arena_alloc(MB(1));
 	for (size_t i = 0; i < arr_len(all_files); i++) {
-		printf("  - %s\n", all_files[i]);
+		char *filepath = all_files[i];
+
+		FILE *fp = fopen(filepath, "r");
+		char linebuf[4096];
+		while (fgets(linebuf, 4096, fp) != NULL) {
+		}
 	}
 }
 #endif
