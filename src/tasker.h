@@ -103,11 +103,12 @@ char **get_all_files(char *dirname, char **files) {
 	while ((e = readdir(dir)) != NULL) {
 		if (e->d_name[0] == '.')
 			continue; // "." and ".."
-		int is_dir = (e->d_type == DT_DIR);
-		if (is_dir)
-			files = get_all_files(e->d_name, files);
-		else
-			arr_push(files, e->d_name);
+		char *full = path_join(dirname, e->d_name);
+		if (e->d_type == DT_DIR) {
+			files = get_all_files(full, files);
+			free(full);
+		} else
+			arr_push(files, full);
 	}
 
 	closedir(dir);
@@ -134,8 +135,6 @@ int main(int argc, char **argv) {
 		printf("  ./tasker.h path/to/project/root\n");
 		return 1;
 	}
-
-	(void)path_join;
 
 	run(argv[1]);
 }
